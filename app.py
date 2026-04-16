@@ -67,7 +67,7 @@ if st.sidebar.button("🚀 샘플 데이터 활용", use_container_width=True):
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("📝 데이터 편집 안내")
-st.sidebar.info("'상세 데이터 및 편집' 탭에서 셀을 수정할 수 있습니다. 수정 후 반드시 왼쪽의 '데이터 활용' 버튼을 눌러야 분석에 반영됩니다.")
+st.sidebar.info("'상세 데이터 및 편집' 탭에서 셀을 수정할 수 있습니다. 수정 후 반드시 왼쪽의 '샘플 데이터 활용' 버튼을 눌러야 분석에 반영됩니다.")
 
 subgroup_size = st.sidebar.number_input("부분군 크기 (n)", min_value=1, max_value=25, value=1)
 
@@ -89,7 +89,7 @@ tab1, tab2, tab3 = st.tabs(["📉 관리도 (SPC Dashboard)", "📊 공정능력
 
 with tab3:
     st.subheader("데이터 직접 수정 및 확인")
-    st.write("아래 표에서 데이터를 직접 수정하거나 행을 추가/삭제할 수 있습니다. 수정 후 왼쪽 사이드바의 **[데이터 활용]** 버튼을 클릭하세요.")
+    st.write("아래 표에서 데이터를 직접 수정하거나 행을 추가/삭제할 수 있습니다. 수정 후 왼쪽 사이드바의 **[샘플 데이터 활용]** 버튼을 클릭하세요.")
     
     # Use Data Editor
     edited_df = st.data_editor(
@@ -105,7 +105,7 @@ with tab3:
 
 # Analysis and Visualization Logic
 if not st.session_state.get('analyzed', False):
-    st.warning("👈 왼쪽 사이드바의 **[데이터 활용 및 분석 시작]** 버튼을 클릭하여 분석을 시작하세요.")
+    st.warning("👈 왼쪽 사이드바의 **[샘플 데이터 활용]** 버튼을 클릭하여 분석을 시작하세요.")
     # Show sample/current statistics even if button not clicked?
     # User might want to see the dashboard only after clicking.
     st.stop()
