@@ -62,7 +62,7 @@ if uploaded_file:
 col_name = st.sidebar.selectbox("분석 대상 컬럼 선택", st.session_state.df.columns)
 
 # Start Analysis Button
-if st.sidebar.button("🚀 데이터 활용 및 분석 시작", use_container_width=True):
+if st.sidebar.button("🚀 샘플 데이터 활용", use_container_width=True):
     st.session_state.analyzed = True
 
 st.sidebar.markdown("---")
