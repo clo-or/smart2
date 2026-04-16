@@ -9,7 +9,7 @@ from spc_utils import calculate_capability, normality_test, get_constant, detect
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="Smart SPC/Capability Dashboard",
+    page_title="스마트 제조 공정 분석 대시보드",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -37,31 +37,31 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- Sidebar ---
-st.sidebar.title("🛠 Settings")
-uploaded_file = st.sidebar.file_uploader("Upload Process Data (CSV/Excel)", type=["csv", "xlsx"])
+st.sidebar.title("⚙️ 분석 설정")
+uploaded_file = st.sidebar.file_uploader("공정 데이터 업로드 (CSV/Excel)", type=["csv", "xlsx"])
 
 # Default Data Generation for Demo
 if not uploaded_file:
-    st.sidebar.info("Using Demo Data. Upload your file to analyze real data.")
+    st.sidebar.info("💡 데모 데이터를 사용 중입니다. 실제 데이터를 분석하려면 파일을 업로드하세요.")
     # Generate random normal data
     np.random.seed(42)
     demo_data = np.random.normal(loc=10.0, scale=0.5, size=100)
-    df = pd.DataFrame({"Measurement": demo_data})
-    col_name = "Measurement"
+    df = pd.DataFrame({"측정값": demo_data})
+    col_name = "측정값"
 else:
     if uploaded_file.name.endswith('.csv'):
         df = pd.read_csv(uploaded_file)
     else:
         df = pd.read_excel(uploaded_file)
-    col_name = st.sidebar.selectbox("Select Target Column", df.columns)
+    col_name = st.sidebar.selectbox("분석 대상 컬럼 선택", df.columns)
 
-subgroup_size = st.sidebar.number_input("Subgroup Size (n)", min_value=1, max_value=25, value=1)
-lsl = st.sidebar.number_input("Lower Specification Limit (LSL)", value=float(df[col_name].min()) - 0.5)
-usl = st.sidebar.number_input("Upper Specification Limit (USL)", value=float(df[col_name].max()) + 0.5)
-target = st.sidebar.number_input("Target Value", value=(usl + lsl) / 2)
+subgroup_size = st.sidebar.number_input("부분군 크기 (n)", min_value=1, max_value=25, value=1)
+lsl = st.sidebar.number_input("규격 하한 (LSL)", value=float(df[col_name].min()) - 0.5)
+usl = st.sidebar.number_input("규격 상한 (USL)", value=float(df[col_name].max()) + 0.5)
+target = st.sidebar.number_input("목표값 (Target)", value=(usl + lsl) / 2)
 
 # --- Main Dashboard ---
-st.title("🏭 Smart Manufacturing: Process Capability & SPC")
+st.title("🏭 스마트 제조: 공정능력분석 및 통계적 공정관리(SPC)")
 st.markdown("---")
 
 # 1. Data Processing
@@ -70,19 +70,19 @@ results = calculate_capability(data, usl, lsl, subgroup_size)
 
 # Layout: Summary Metrics
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Process Mean (μ)", f"{results['Mean']:.4f}")
-m2.metric("Sigma (Within)", f"{results['Sigma(Within)']:.4f}")
+m1.metric("공정 평균 (μ)", f"{results['Mean']:.4f}")
+m2.metric("군내 표준편차 (σ)", f"{results['Sigma(Within)']:.4f}")
 
 cp_color = "normal" if results['Cp'] >= 1.33 else "off"
-m3.metric("Cp (Potential Capability)", f"{results['Cp']:.3f}", delta=None if results['Cp'] >= 1.33 else "Needs Improvement", delta_color=cp_color)
+m3.metric("단기 공정능력 (Cp)", f"{results['Cp']:.3f}", delta=None if results['Cp'] >= 1.33 else "개선 필요", delta_color=cp_color)
 pk_color = "normal" if results['Cpk'] >= 1.33 else "inverse"
-m4.metric("Cpk (Actual Capability)", f"{results['Cpk']:.3f}")
+m4.metric("실질 공정능력 (Cpk)", f"{results['Cpk']:.3f}", delta=None if results['Cpk'] >= 1.33 else "기준 미달")
 
 # Layout: Tabs for different views
-tab1, tab2, tab3 = st.tabs(["📉 Control Charts (SPC)", "📊 Capability Analysis", "📋 Raw Data & Analysis"])
+tab1, tab2, tab3 = st.tabs(["📉 관리도 (SPC Dashboard)", "📊 공정능력분석 (Capability)", "📋 상세 데이터 및 요약"])
 
 with tab1:
-    st.subheader("Statistical Process Control Charts")
+    st.subheader("통계적 공정관리 관리도 (Control Charts)")
     
     if subgroup_size == 1:
         # I-MR Chart
@@ -100,20 +100,20 @@ with tab1:
         cl_mr = mr_bar
         d4_2 = get_constant(2, "D4")
         ucl_mr = d4_2 * mr_bar
-        lcl_mr = 0 # Lower limit for MR is 0 when n=2
+        lcl_mr = 0 
         
         # Create Plots
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1,
-                            subplot_titles=("I-Chart (Individual)", "MR-Chart (Moving Range)"))
+                            subplot_titles=("I-관리도 (개별 측정치)", "MR-관리도 (이동 범위)"))
         
         # I-Chart Trace
-        fig.add_trace(go.Scatter(y=x_vals, mode='lines+markers', name='Indiv. Value', marker=dict(color='blue')), row=1, col=1)
+        fig.add_trace(go.Scatter(y=x_vals, mode='lines+markers', name='측정값', marker=dict(color='blue')), row=1, col=1)
         fig.add_hline(y=ucl_i, line_dash="dash", line_color="red", annotation_text=f"UCL={ucl_i:.2f}", row=1, col=1)
         fig.add_hline(y=cl_i, line_color="green", annotation_text=f"CL={cl_i:.2f}", row=1, col=1)
         fig.add_hline(y=lcl_i, line_dash="dash", line_color="red", annotation_text=f"LCL={lcl_i:.2f}", row=1, col=1)
         
         # MR-Chart Trace
-        fig.add_trace(go.Scatter(y=mr, mode='lines+markers', name='Moving Range', marker=dict(color='orange')), row=2, col=1)
+        fig.add_trace(go.Scatter(y=mr, mode='lines+markers', name='이동 범위', marker=dict(color='orange')), row=2, col=1)
         fig.add_hline(y=ucl_mr, line_dash="dash", line_color="red", annotation_text=f"UCL={ucl_mr:.2f}", row=2, col=1)
         fig.add_hline(y=cl_mr, line_color="green", annotation_text=f"CL={cl_mr:.2f}", row=2, col=1)
         
@@ -122,12 +122,20 @@ with tab1:
         
         violations = detect_nelson_rules(data, ucl_i, lcl_i, cl_i)
         if violations:
-            st.warning(f"⚠️ {len(violations)} Out-of-Control signals detected in I-Chart!")
-            with st.expander("Show Violation Details"):
-                st.write(violations)
+            st.warning(f"⚠️ I-관리도에서 {len(violations)}개의 관리 이탈 신호가 탐지되었습니다!")
+            with st.expander("위반 상세 내용 보기"):
+                # Translate violation messages
+                translated_violations = []
+                for idx, msg in violations:
+                    msg_kr = msg.replace("Rule 1: Beyond Limits", "규칙 1: 관리 한계 이탈") \
+                               .replace("Rule 2: 9 points on one side", "규칙 2: 9점 연속 한쪽 편중") \
+                               .replace("Rule 3: 6 points trending", "규칙 3: 6점 연속 상승/하락") \
+                               .replace("Rule 4: 14 points alternating", "규칙 4: 14점 연속 교차")
+                    translated_violations.append({"인덱스": idx, "발생 위치": f"Point {idx+1}", "위반 내용": msg_kr})
+                st.table(pd.DataFrame(translated_violations))
 
     else:
-        # Xbar-R or Xbar-S Chart
+        # Xbar-R Chart
         n = subgroup_size
         reshaped = data[:(len(data)//n)*n].reshape(-1, n)
         means = np.mean(reshaped, axis=1)
@@ -149,14 +157,14 @@ with tab1:
         lcl_r = d3 * r_bar
         
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1,
-                            subplot_titles=(f"X-bar Chart (n={n})", "R Chart (Range)"))
+                            subplot_titles=(f"X-bar 관리도 (n={n})", "R 관리도 (범위)"))
         
-        fig.add_trace(go.Scatter(y=means, mode='lines+markers', name='Subgroup Mean'), row=1, col=1)
+        fig.add_trace(go.Scatter(y=means, mode='lines+markers', name='부분군 평균'), row=1, col=1)
         fig.add_hline(y=ucl_x, line_dash="dash", line_color="red", annotation_text=f"UCL={ucl_x:.2f}", row=1, col=1)
         fig.add_hline(y=x_double_bar, line_color="green", annotation_text=f"CL={x_double_bar:.2f}", row=1, col=1)
         fig.add_hline(y=lcl_x, line_dash="dash", line_color="red", annotation_text=f"LCL={lcl_x:.2f}", row=1, col=1)
         
-        fig.add_trace(go.Scatter(y=ranges, mode='lines+markers', name='Subgroup Range', marker_color="#ff7f0e"), row=2, col=1)
+        fig.add_trace(go.Scatter(y=ranges, mode='lines+markers', name='부분군 범위', marker_color="#ff7f0e"), row=2, col=1)
         fig.add_hline(y=ucl_r, line_dash="dash", line_color="red", annotation_text=f"UCL={ucl_r:.2f}", row=2, col=1)
         fig.add_hline(y=r_bar, line_color="green", annotation_text=f"CL={r_bar:.2f}", row=2, col=1)
         fig.add_hline(y=lcl_r, line_dash="dash", line_color="red", annotation_text=f"LCL={lcl_r:.2f}", row=2, col=1)
@@ -168,69 +176,66 @@ with tab2:
     col_a, col_b = st.columns(2)
     
     with col_a:
-        st.subheader("Histogram & Spec Limits")
+        st.subheader("히스토그램 및 규격선 확인")
         hist_fig = go.Figure()
-        hist_fig.add_trace(go.Histogram(x=data, nbinsx=20, name="Process Data", marker_color="#3366cc", opacity=0.7))
+        hist_fig.add_trace(go.Histogram(x=data, nbinsx=20, name="실제 데이터", marker_color="#3366cc", opacity=0.7))
         
-        # Add normal distribution curve fit
         x_range = np.linspace(min(data), max(data), 100)
         p = stats.norm.pdf(x_range, results['Mean'], results['Sigma(Overall)'])
-        # Scale PDF to match histogram count
-        p_scaled = p * len(data) * ( (max(data) - min(data)) / 20 ) # Rough scaling
-        hist_fig.add_trace(go.Scatter(x=x_range, y=p_scaled, mode='lines', name='Normal Fit', line=dict(color='black', width=3)))
+        p_scaled = p * len(data) * ( (max(data) - min(data)) / 20 ) 
+        hist_fig.add_trace(go.Scatter(x=x_range, y=p_scaled, mode='lines', name='정규분포 곡선', line=dict(color='black', width=3)))
 
         # Spec Lines
-        hist_fig.add_vline(x=usl, line_width=4, line_dash="dash", line_color="red", annotation_text="USL")
-        hist_fig.add_vline(x=lsl, line_width=4, line_dash="dash", line_color="red", annotation_text="LSL")
-        hist_fig.add_vline(x=target, line_width=2, line_dash="dot", line_color="green", annotation_text="Target")
+        hist_fig.add_vline(x=usl, line_width=4, line_dash="dash", line_color="red", annotation_text="USL (상한)")
+        hist_fig.add_vline(x=lsl, line_width=4, line_dash="dash", line_color="red", annotation_text="LSL (하한)")
+        hist_fig.add_vline(x=target, line_width=2, line_dash="dot", line_color="green", annotation_text="목표값")
         
         hist_fig.update_layout(template="plotly_white", showlegend=True, bargap=0.1)
         st.plotly_chart(hist_fig, use_container_width=True)
         
     with col_b:
-        st.subheader("Normality & Analysis")
+        st.subheader("정규성 검정 및 시각화")
         # Q-Q Plot
         qq = stats.probplot(data, dist="norm")
         qq_fig = go.Figure()
-        qq_fig.add_trace(go.Scatter(x=qq[0][0], y=qq[0][1], mode='markers', name='Data', marker=dict(color='#3366cc')))
+        qq_fig.add_trace(go.Scatter(x=qq[0][0], y=qq[0][1], mode='markers', name='데이터 포인트', marker=dict(color='#3366cc')))
         
-        # Perfect normal line
         line = np.polyfit(qq[0][0], qq[0][1], 1)
-        qq_fig.add_trace(go.Scatter(x=qq[0][0], y=line[0]*qq[0][0] + line[1], mode='lines', name='Normal Line', line=dict(color='red')))
+        qq_fig.add_trace(go.Scatter(x=qq[0][0], y=line[0]*qq[0][0] + line[1], mode='lines', name='회귀선', line=dict(color='red')))
         
-        qq_fig.update_layout(title="Normal Q-Q Plot", xaxis_title="Theoretical Quantiles", yaxis_title="Sample Quantiles", template="plotly_white")
+        qq_fig.update_layout(title="정규 Q-Q 플롯", xaxis_title="이론적 분위수", yaxis_title="샘플 분위수", template="plotly_white")
         st.plotly_chart(qq_fig, use_container_width=True)
         
         # Normality Test Result
         stat, p_val = normality_test(data)
-        st.info(f"**Shapiro-Wilk Normality Test:**\n\nStatistic: {stat:.4f}\n\np-value: {p_val:.4g}")
+        st.info(f"**Shapiro-Wilk 정규성 검정 결과:**\n\n통계량: {stat:.4f}\n\np-value: {p_val:.4g}")
         if p_val < 0.05:
-            st.warning("⚠️ Data may not be normally distributed (p < 0.05). Use caution with Cp/Cpk interpretation.")
+            st.warning("⚠️ 데이터가 정규분포를 따르지 않을 가능성이 높습니다 (p < 0.05). 공정능력지수 해석에 주의하십시오.")
         else:
-            st.success("✅ Data appears to be normally distributed (p >= 0.05).")
+            st.success("✅ 데이터가 정규성을 만족합니다 (p >= 0.05).")
 
 with tab3:
-    st.subheader("Analysis Summary")
+    st.subheader("📊 분석 결과 요약")
     summary_df = pd.DataFrame({
-        "Metric": ["Cp (Potential)", "Cpk (Actual)", "Pp (Performance)", "Ppk (Actual Performance)", "Process Mean", "Sigma (Within)", "Sigma (Overall)"],
-        "Value": [results['Cp'], results['Cpk'], results['Pp'], results['Ppk'], results['Mean'], results['Sigma(Within)'], results['Sigma(Overall)']]
+        "항목": ["Cp (단기 잠재력)", "Cpk (실질 공정능력)", "Pp (장기 성능)", "Ppk (실질 장기성능)", "공정 평균 (Mean)", "군내 표준편차 (Within)", "전체 표준편차 (Overall)"],
+        "수치": [results['Cp'], results['Cpk'], results['Pp'], results['Ppk'], results['Mean'], results['Sigma(Within)'], results['Sigma(Overall)']]
     })
-    st.table(summary_df.set_index("Metric"))
+    st.table(summary_df.set_index("항목"))
     
-    st.subheader("Process Status")
+    st.subheader("🛡️ 공정 수준 판정")
     val_pk = results['Cpk']
     if val_pk >= 1.67:
-        st.success("💎 **Excellent** (World Class): Process is very capable.")
+        st.success("💎 **최상 (World Class)**: 공정 능력이 매우 뛰어납니다.")
     elif val_pk >= 1.33:
-        st.success("✅ **Good**: Process is capable.")
+        st.success("✅ **우수 (Capable)**: 공정이 관리 상태에 있으며 능력이 충분합니다.")
     elif val_pk >= 1.0:
-        st.warning("⚠️ **Marginal**: Caution. Process capability is limited.")
+        st.warning("⚠️ **보통 (Marginal)**: 관리가 필요합니다. 공정 능력이 한계치에 가깝습니다.")
     else:
-        st.error("❌ **Poor**: Process is not capable. Improvements required.")
+        st.error("❌ **미흡 (Poor)**: 공정 능력이 부족합니다. 즉각적인 개선 조치가 필요합니다.")
         
-    st.subheader("Source Data")
+    st.subheader("📄 원본 데이터 미리보기")
     st.dataframe(df, use_container_width=True)
 
 # Footer
 st.markdown("---")
-st.markdown("Developed for Smart Manufacturing Analytics Lab")
+st.markdown("Developed for Smart Manufacturing Analytics Lab | 스마트 제조 혁신 전문가 과정")
